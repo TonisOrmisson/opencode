@@ -335,7 +335,7 @@ function createTaskbarAttentionIcon(count: number) {
   canvas.height = 16
   const context = canvas.getContext("2d")
   if (!context) return
-  context.fillStyle = "#d70015"
+  context.fillStyle = "#000000"
   context.beginPath()
   context.arc(8, 8, 8, 0, Math.PI * 2)
   context.fill()
