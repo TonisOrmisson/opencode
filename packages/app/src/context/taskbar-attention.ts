@@ -1,3 +1,8 @@
+export function formatTaskbarAttentionCount(count: number) {
+  if (count <= 0) return undefined
+  return count > 99 ? "99+" : String(count)
+}
+
 export function createTaskbarAttentionState() {
   const pending = new Map<string, Set<string>>()
   const cancelled = new Map<string, Set<string>>()

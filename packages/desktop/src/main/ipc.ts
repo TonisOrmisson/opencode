@@ -257,10 +257,10 @@ export function registerIpcHandlers(deps: Deps) {
     return win?.isFocused() ?? false
   })
 
-  ipcMain.handle("set-taskbar-attention", (event: IpcMainInvokeEvent, count: number) => {
+  ipcMain.handle("set-taskbar-attention", (event: IpcMainInvokeEvent, count: number, iconDataUrl: string) => {
     const win = BrowserWindow.fromWebContents(event.sender)
-    if (!win) return
-    setTaskbarAttention(win, count)
+    if (!win || typeof iconDataUrl !== "string") return
+    setTaskbarAttention(win, count, iconDataUrl)
   })
 
   ipcMain.handle("get-window-fullscreen", (event: IpcMainInvokeEvent) => {

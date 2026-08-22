@@ -16,7 +16,7 @@ import { nativeT } from "./native-translations"
 import { createWindowRegistry } from "./window-registry"
 import { safeWindowURL } from "./window-state"
 import { resolveExternalURL, resolveLocalFilePath } from "./external-url"
-import { formatTaskbarAttentionCount } from "./taskbar-attention"
+import { formatTaskbarAttentionCount } from "@opencode-ai/app/context/taskbar-attention"
 
 const root = dirname(fileURLToPath(import.meta.url))
 const rendererRoot = join(root, "../renderer")
@@ -55,6 +55,7 @@ const titlebarThemes = new WeakMap<BrowserWindow, Partial<TitlebarTheme>>()
 const pinchZoomEnabled = new WeakMap<BrowserWindow, boolean>()
 const windowIDs = new WeakMap<BrowserWindow, string>()
 const taskbarAttentionCounts = new WeakMap<BrowserWindow, number>()
+const taskbarAttentionIcons = new WeakMap<BrowserWindow, string>()
 const registry = createWindowRegistry<BrowserWindow>({
   read: () => getStore().get(WINDOW_IDS_KEY),
   write: (ids) => getStore().set(WINDOW_IDS_KEY, ids),
@@ -167,11 +168,12 @@ export function setDockIcon() {
   if (!icon.isEmpty()) app.dock?.setIcon(icon)
 }
 
-export function setTaskbarAttention(win: BrowserWindow, count: number) {
+export function setTaskbarAttention(win: BrowserWindow, count: number, iconDataUrl: string) {
   if (process.platform !== "win32" || win.isDestroyed()) return
 
   const normalized = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0
   taskbarAttentionCounts.set(win, normalized)
+  taskbarAttentionIcons.set(win, iconDataUrl)
   if (normalized === 0) {
     win.setOverlayIcon(null, "")
     return
@@ -183,16 +185,19 @@ export function setTaskbarAttention(win: BrowserWindow, count: number) {
 
   const label = formatTaskbarAttentionCount(normalized)
   if (!label) return
-  const fontSize = label.length > 2 ? 7 : label.length > 1 ? 9 : 11
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="8" fill="#d70015"/><text x="8" y="11" fill="white" font-family="Arial" font-size="${fontSize}" font-weight="700" text-anchor="middle">${label}</text></svg>`
-  const icon = nativeImage.createFromDataURL(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`)
+  const icon = nativeImage.createFromDataURL(iconDataUrl)
+  if (icon.isEmpty()) {
+    writeLog("window", "invalid taskbar attention icon", { count: normalized, label }, "warn")
+    return
+  }
   win.setOverlayIcon(icon, nativeT("desktop.menu.app"))
 }
 
 function updateTaskbarAttention(win: BrowserWindow) {
   const count = taskbarAttentionCounts.get(win)
-  if (count === undefined) return
-  setTaskbarAttention(win, count)
+  const iconDataUrl = taskbarAttentionIcons.get(win)
+  if (count === undefined || iconDataUrl === undefined) return
+  setTaskbarAttention(win, count, iconDataUrl)
 }
 
 export function createMainWindow(id: string = randomUUID()) {

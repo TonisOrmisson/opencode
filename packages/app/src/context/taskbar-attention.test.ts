@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test"
-import { createTaskbarAttentionState } from "./taskbar-attention"
+import { createTaskbarAttentionState, formatTaskbarAttentionCount } from "./taskbar-attention"
 
 describe("taskbar attention state", () => {
+  test("formats taskbar counts", () => {
+    expect(formatTaskbarAttentionCount(0)).toBeUndefined()
+    expect(formatTaskbarAttentionCount(1)).toBe("1")
+    expect(formatTaskbarAttentionCount(10)).toBe("10")
+    expect(formatTaskbarAttentionCount(100)).toBe("99+")
+  })
+
   test("counts each session once across unread and pending attention", () => {
     const attention = createTaskbarAttentionState()
 
