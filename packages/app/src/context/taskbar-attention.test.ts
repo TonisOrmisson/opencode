@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test"
-import { createTaskbarAttentionState, formatTaskbarAttentionCount } from "./taskbar-attention"
+import {
+  createTaskbarAttentionState,
+  formatTaskbarAttentionCount,
+  taskbarAttentionIconStyle,
+} from "./taskbar-attention"
 
 describe("taskbar attention state", () => {
   test("formats taskbar counts", () => {
@@ -7,6 +11,11 @@ describe("taskbar attention state", () => {
     expect(formatTaskbarAttentionCount(1)).toBe("1")
     expect(formatTaskbarAttentionCount(10)).toBe("10")
     expect(formatTaskbarAttentionCount(100)).toBe("99+")
+  })
+
+  test("uses a compact charcoal badge", () => {
+    expect(taskbarAttentionIconStyle("1")).toEqual({ background: "#262626", radius: 7, fontSize: 11 })
+    expect(taskbarAttentionIconStyle("99+").fontSize).toBe(7)
   })
 
   test("counts each session once across unread and pending attention", () => {

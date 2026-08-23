@@ -15,7 +15,7 @@ import {
   useWslServers,
   useLanguage,
 } from "@opencode-ai/app"
-import { formatTaskbarAttentionCount } from "@opencode-ai/app/context/taskbar-attention"
+import { formatTaskbarAttentionCount, taskbarAttentionIconStyle } from "@opencode-ai/app/context/taskbar-attention"
 import type { UpdaterState } from "@opencode-ai/app/updater"
 import * as Sentry from "@sentry/solid"
 import type { AsyncStorage } from "@solid-primitives/storage"
@@ -335,12 +335,13 @@ function createTaskbarAttentionIcon(count: number) {
   canvas.height = 16
   const context = canvas.getContext("2d")
   if (!context) return
-  context.fillStyle = "#000000"
+  const style = taskbarAttentionIconStyle(label)
+  context.fillStyle = style.background
   context.beginPath()
-  context.arc(8, 8, 8, 0, Math.PI * 2)
+  context.arc(8, 8, style.radius, 0, Math.PI * 2)
   context.fill()
   context.fillStyle = "white"
-  context.font = `700 ${label.length > 2 ? 7 : label.length > 1 ? 9 : 11}px Arial`
+  context.font = `700 ${style.fontSize}px Arial`
   context.textAlign = "center"
   context.textBaseline = "middle"
   context.fillText(label, 8, 8)
