@@ -1,16 +1,3 @@
-export function formatTaskbarAttentionCount(count: number) {
-  if (count <= 0) return undefined
-  return count > 99 ? "99+" : String(count)
-}
-
-export function taskbarAttentionIconStyle(label: string) {
-  return {
-    background: "#262626",
-    radius: 7,
-    fontSize: label.length > 2 ? 7 : label.length > 1 ? 9 : 11,
-  }
-}
-
 export function createTaskbarAttentionState() {
   const pending = new Map<string, Set<string>>()
   const cancelled = new Map<string, Set<string>>()

@@ -16,7 +16,7 @@ import { nativeT } from "./native-translations"
 import { createWindowRegistry } from "./window-registry"
 import { safeWindowURL } from "./window-state"
 import { resolveExternalURL, resolveLocalFilePath } from "./external-url"
-import { formatTaskbarAttentionCount } from "@opencode-ai/app/context/taskbar-attention"
+import { taskbarBadgeCount } from "./taskbar-attention"
 
 const root = dirname(fileURLToPath(import.meta.url))
 const rendererRoot = join(root, "../renderer")
@@ -55,7 +55,6 @@ const titlebarThemes = new WeakMap<BrowserWindow, Partial<TitlebarTheme>>()
 const pinchZoomEnabled = new WeakMap<BrowserWindow, boolean>()
 const windowIDs = new WeakMap<BrowserWindow, string>()
 const taskbarAttentionCounts = new WeakMap<BrowserWindow, number>()
-const taskbarAttentionIcons = new WeakMap<BrowserWindow, string>()
 const registry = createWindowRegistry<BrowserWindow>({
   read: () => getStore().get(WINDOW_IDS_KEY),
   write: (ids) => getStore().set(WINDOW_IDS_KEY, ids),
@@ -168,36 +167,18 @@ export function setDockIcon() {
   if (!icon.isEmpty()) app.dock?.setIcon(icon)
 }
 
-export function setTaskbarAttention(win: BrowserWindow, count: number, iconDataUrl: string) {
+export function setTaskbarAttention(win: BrowserWindow, count: number) {
   if (process.platform !== "win32" || win.isDestroyed()) return
 
   const normalized = Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0
   taskbarAttentionCounts.set(win, normalized)
-  taskbarAttentionIcons.set(win, iconDataUrl)
-  if (normalized === 0) {
-    win.setOverlayIcon(null, "")
-    return
-  }
-  if (win.isFocused()) {
-    win.setOverlayIcon(null, "")
-    return
-  }
-
-  const label = formatTaskbarAttentionCount(normalized)
-  if (!label) return
-  const icon = nativeImage.createFromDataURL(iconDataUrl)
-  if (icon.isEmpty()) {
-    writeLog("window", "invalid taskbar attention icon", { count: normalized, label }, "warn")
-    return
-  }
-  win.setOverlayIcon(icon, nativeT("desktop.menu.app"))
+  app.setBadgeCount(taskbarBadgeCount(normalized, win.isFocused()))
 }
 
 function updateTaskbarAttention(win: BrowserWindow) {
   const count = taskbarAttentionCounts.get(win)
-  const iconDataUrl = taskbarAttentionIcons.get(win)
-  if (count === undefined || iconDataUrl === undefined) return
-  setTaskbarAttention(win, count, iconDataUrl)
+  if (count === undefined) return
+  setTaskbarAttention(win, count)
 }
 
 export function createMainWindow(id: string = randomUUID()) {
@@ -308,7 +289,7 @@ function registerWindow(win: BrowserWindow, id: string) {
 
   win.on("focus", () => {
     registry.focused(id)
-    if (process.platform === "win32") win.setOverlayIcon(null, "")
+    if (process.platform === "win32") app.setBadgeCount(0)
   })
   win.on("blur", () => updateTaskbarAttention(win))
   // Windows never emits before-quit on OS shutdown/logoff, but each window

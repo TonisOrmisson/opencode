@@ -15,7 +15,6 @@ import {
   useWslServers,
   useLanguage,
 } from "@opencode-ai/app"
-import { formatTaskbarAttentionCount, taskbarAttentionIconStyle } from "@opencode-ai/app/context/taskbar-attention"
 import type { UpdaterState } from "@opencode-ai/app/updater"
 import * as Sentry from "@sentry/solid"
 import type { AsyncStorage } from "@solid-primitives/storage"
@@ -270,9 +269,7 @@ const createPlatform = (windowState: DesktopWindowState): Platform => {
 
     setTaskbarAttention: (count) => {
       if (os !== "windows") return
-      const iconDataUrl = createTaskbarAttentionIcon(count)
-      if (!iconDataUrl) return window.api.setTaskbarAttention(0, "")
-      return window.api.setTaskbarAttention(count, iconDataUrl)
+      return window.api.setTaskbarAttention(count)
     },
 
     getWindowFocused: () => window.api.getWindowFocused(),
@@ -325,27 +322,6 @@ const createPlatform = (windowState: DesktopWindowState): Platform => {
       })
     },
   }
-}
-
-function createTaskbarAttentionIcon(count: number) {
-  const label = formatTaskbarAttentionCount(count)
-  if (!label) return
-  const canvas = document.createElement("canvas")
-  canvas.width = 16
-  canvas.height = 16
-  const context = canvas.getContext("2d")
-  if (!context) return
-  const style = taskbarAttentionIconStyle(label)
-  context.fillStyle = style.background
-  context.beginPath()
-  context.arc(8, 8, style.radius, 0, Math.PI * 2)
-  context.fill()
-  context.fillStyle = "white"
-  context.font = `700 ${style.fontSize}px Arial`
-  context.textAlign = "center"
-  context.textBaseline = "middle"
-  context.fillText(label, 8, 8)
-  return canvas.toDataURL("image/png")
 }
 
 let menuTrigger = null as null | ((id: string) => void)
